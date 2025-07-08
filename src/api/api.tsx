@@ -1,0 +1,85 @@
+
+  import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
+
+  const api = axios.create({
+    baseURL: 'http://127.0.0.1:8000', // Replace with your machine’s IP or backend URL
+    withCredentials: true,
+  });
+
+  const setupAxios = async () => {
+    const token = await AsyncStorage.getItem('token');
+    if (token) {
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }
+  };
+
+  // Fetch CSRF cookie
+  const getCsrfCookie = async () => {
+    try {
+      console.log('Fetching CSRF cookie...'); // Debug log
+      const response = await api.get('/sanctum/csrf-cookie');
+      console.log('CSRF Cookie Response:', response.status); // Debug log
+      return response;
+    } catch (error) {
+      console.error('CSRF Cookie Error:', error.response?.data || error.message);
+      throw error;
+    }
+  };
+
+  // Login
+  export const login = async (email: string, password: string) => {
+    await getCsrfCookie();
+    const response = await api.post('/api/login', { email, password });
+    const { token, user } = response.data;
+    await AsyncStorage.setItem('token', token);
+    await AsyncStorage.setItem('user', JSON.stringify(user));
+    await setupAxios();
+    return response.data;
+  };
+
+  // Register
+  export const register = async (name: string, email: string, password: string, password_confirmation: string) => {
+    await getCsrfCookie();
+    const response = await api.post('/api/register', { name, email, password, password_confirmation });
+    return response.data;
+  };
+
+  // Fetch User Profile
+  export const getUser = async () => {
+    await setupAxios();
+    const response = await api.get('/api/user');
+    return response.data;
+  };
+
+  // Fetch Groups
+  export const getGroups = async () => {
+    await setupAxios();
+    const response = await api.get('/api/groups');
+    return response.data.data || [];
+  };
+
+  // Create Group
+  export const createGroup = async (name: string, description: string) => {
+    await getCsrfCookie();
+    await setupAxios();
+    const response = await api.post('/api/groups', { name, description });
+    return response.data;
+  };
+
+  // Join Group via QR Code
+  export const joinGroup = async (code: string) => {
+    await getCsrfCookie();
+    await setupAxios();
+    const response = await api.post('/api/join-group', { code });
+    return response.data;
+  };
+
+  // Fetch Group Details
+  export const getGroupDetails = async (groupId: string) => {
+    await setupAxios();
+    const response = await api.get(`/api/groups/${groupId}`);
+    return response.data;
+  };
+
+  export default api;
