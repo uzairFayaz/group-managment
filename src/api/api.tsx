@@ -162,6 +162,19 @@ export const verifyForgetPassword = async (code: string) => {
   const response = await api.post('/api/verify-forget-password', { code });
   return response.data;
 };
+export const verifyOtp = async (otp: string) => {
+  await getCsrfCookie();
+  await setupAxios();
+  const response = await api.post('/api/verify-otp', { otp });
+  return response.data;
+};
+// Reset password with new password
+export const resetPassword = async (password: string) => {
+  await getCsrfCookie();
+  await setupAxios();
+  const response = await api.post('/api/password-reset', { password });
+  return response.data;
+};
 // Create a Story
 export const createStory = async (
   groupId: string,
