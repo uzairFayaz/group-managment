@@ -142,7 +142,7 @@ export const getGroupQr = async (groupId: string) => {
 export const requestForgetPassword = async (email: string) => {
   await getCsrfCookie();
   await setupAxios();
-  const response = await api.post('/forget-password', { email });
+  const response = await api.post('/api/forget-password', { email });
   return response.data;
 };
 
@@ -153,6 +153,13 @@ export const toggleGroupSharing = async (groupId: string) => {
   console.log("Toggling sharing for group ID:", groupId); // Debug log
   const response = await api.post(`/api/groups/${groupId}/toggle-sharing`);
   console.log("Toggle Sharing Response:", response.data); // Debug log
+  return response.data;
+};
+
+export const verifyForgetPassword = async (code: string) => {
+  await getCsrfCookie();
+  await setupAxios();
+  const response = await api.post('/api/verify-forget-password', { code });
   return response.data;
 };
 // Create a Story
