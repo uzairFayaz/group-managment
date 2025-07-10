@@ -88,6 +88,12 @@ const LoginScreen = () => {
         >
           <Text style={styles.registerText}>Don't have an account? Register</Text>
         </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.registerLink}
+          onPress={() => router.push('/forgetPassword')}
+        >
+          <Text style={styles.registerText}>Forget Password !</Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );

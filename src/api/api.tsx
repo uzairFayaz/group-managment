@@ -139,6 +139,13 @@ export const getGroupQr = async (groupId: string) => {
   return response.data;
 };
 
+export const requestForgetPassword = async (email: string) => {
+  await getCsrfCookie();
+  await setupAxios();
+  const response = await api.post('/forget-password', { email });
+  return response.data;
+};
+
 // Toggle Group Sharing
 export const toggleGroupSharing = async (groupId: string) => {
   await getCsrfCookie();

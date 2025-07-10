@@ -9,6 +9,7 @@ export default function RootLayout() {
     <ErrorBoundary>
       <Stack>
         <Stack.Screen name="index" options={{headerShown:false}}/>
+        <Stack.Screen name='forgetPassword' options={{title:'Forget Password', headerShown: false}}/>
         <Stack.Screen name="create" options={{ title: 'Create Group', headerShown: false }} />
         <Stack.Screen name="join" options={{ title: 'Join Group', headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
