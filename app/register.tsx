@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { Alert, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { register } from '../src/api/api';
 
 const RegisterScreen = () => {
@@ -8,6 +9,8 @@ const RegisterScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [message, setMessage] = useState('');
   const router = useRouter();
 
@@ -29,71 +32,183 @@ const RegisterScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Register</Text>
-      {message ? <Text style={styles.message}>{message}</Text> : null}
-      <TextInput
-        style={styles.input}
-        placeholder="Name"
-        value={name}
-        onChangeText={setName}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Confirm Password"
-        value={passwordConfirmation}
-        onChangeText={setPasswordConfirmation}
-        secureTextEntry
-      />
-      <Button title="Register" onPress={handleRegister} />
-      <Button
-        title="Back to Login"
-        onPress={() => router.replace('/login')}
-      />
-    </View>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.appTitle}>Cookie</Text>
+      </View>
+      
+      <View style={styles.content}>
+        <Text style={styles.title}>Register</Text>
+        
+        {message ? <Text style={styles.message}>{message}</Text> : null}
+        
+        {/* Name Input */}
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Name</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter your name"
+            value={name}
+            onChangeText={setName}
+          />
+        </View>
+        
+        {/* Email Input */}
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Email</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter your email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+        </View>
+        
+        {/* Password Input */}
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Password</Text>
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={[styles.input, { flex: 1 }]}
+              placeholder="Enter your password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+            />
+            <TouchableOpacity 
+              style={styles.eyeIcon} 
+              onPress={() => setShowPassword(!showPassword)}
+            >
+              <Ionicons 
+                name={showPassword ? "eye-off" : "eye"} 
+                size={20} 
+                color="#666" 
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+        
+        {/* Confirm Password Input */}
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Confirm Password</Text>
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={[styles.input, { flex: 1 }]}
+              placeholder="Confirm your password"
+              value={passwordConfirmation}
+              onChangeText={setPasswordConfirmation}
+              secureTextEntry={!showConfirmPassword}
+            />
+            <TouchableOpacity 
+              style={styles.eyeIcon} 
+              onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+            >
+              <Ionicons 
+                name={showConfirmPassword ? "eye-off" : "eye"} 
+                size={20} 
+                color="#666" 
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+        
+        {/* Register Button */}
+        <TouchableOpacity 
+          style={styles.registerButton}
+          onPress={handleRegister}
+        >
+          <Text style={styles.buttonText}>Register</Text>
+        </TouchableOpacity>
+        
+        {/* Login Link */}
+        <TouchableOpacity 
+          style={styles.loginLink}
+          onPress={() => router.replace('/login')}
+        >
+          <Text style={styles.loginText}>Already have an account? Login</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    padding: 20,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#fff',
+  },
+  header: {
+    alignItems: 'center',
+    paddingTop: 20,
+  },
+  appTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#4361ee',
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 30,
+    paddingTop: 40,
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
+    fontWeight: '600',
+    marginBottom: 30,
     textAlign: 'center',
   },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 16,
+    marginBottom: 8,
+    color: '#333',
+  },
   input: {
+    height: 50,
     borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 5,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    fontSize: 16,
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 15,
     padding: 10,
-    marginBottom: 10,
-    backgroundColor: '#fff',
+  },
+  registerButton: {
+    backgroundColor: '#7209b7',
+    height: 50,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  loginLink: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  loginText: {
+    color: '#666',
+    fontSize: 16,
   },
   message: {
     fontSize: 16,
     color: '#dc2626',
-    marginBottom: 10,
+    marginBottom: 20,
     textAlign: 'center',
   },
 });

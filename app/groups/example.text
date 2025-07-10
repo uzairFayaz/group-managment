@@ -1,0 +1,266 @@
+import { useLocalSearchParams } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, Button, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import CreatePost from '../../components/createPosts';
+import CreateStories from '../../components/createStories';
+import { getGroupDetails, getGroupMembers, getGroupPosts, getGroupQr, getGroupStories, toggleGroupSharing } from '../../src/api/api';
+
+interface Group {
+  id: number;
+  name: string;
+  description: string;
+  creator: { id: number; name: string } | null;
+  is_shared: boolean;
+  share_code: string | null;
+}
+
+interface Member {
+  user_id: number;
+  user_name: string;
+  user_email: string;
+}
+
+interface Story {
+  id: number;
+  content: string;
+  user: { name: string } | null;
+  expires_at: string;
+}
+
+interface Post {
+  id: number;
+  content: string;
+  user: { name: string } | null;
+  created_at: string;
+}
+
+const GroupDetailScreen = () => {
+  const { groupId } = useLocalSearchParams();
+  const [group, setGroup] = useState<Group | null>(null);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [stories, setStories] = useState<Story[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [qrCode, setQrCode] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'Stories' | 'Posts' | 'Members'>('Stories');
+
+  const fetchGroupData = async () => {
+    try {
+      setLoading(true);
+      const [groupData, membersData, storiesData, postsData] = await Promise.all([
+        getGroupDetails(groupId as string),
+        getGroupMembers(groupId as string),
+        getGroupStories(groupId as string),
+        getGroupPosts(groupId as string),
+      ]);
+      console.log('Group Data:', groupData); // Debug log
+      console.log('Members Data:', membersData); // Debug log
+      console.log('Stories Data:', storiesData); // Debug log
+      console.log('Posts Data:', postsData); // Debug log
+      setGroup(groupData);
+      setMembers(membersData.data || []);
+      setStories(storiesData.data?.stories || []);
+      setPosts(postsData.data?.posts || []);
+      setError(null);
+    } catch (err) {
+      console.error('Fetch Group Data Error:', err);
+      setError('Failed to load group data.');
+      Alert.alert('Error', 'Failed to load group data.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleToggleSharing = async () => {
+    try {
+      const response = await toggleGroupSharing(groupId as string);
+      setGroup(prev => prev ? { ...prev, is_shared: response.data.is_shared } : null);
+      if (response.data.is_shared && group?.share_code) {
+        const qr = await getGroupQr(groupId as string);
+        setQrCode(qr);
+      } else {
+        setQrCode(null);
+      }
+    } catch (err) {
+      console.error('Toggle Sharing Error:', err);
+      Alert.alert('Error', 'Failed to toggle sharing.');
+    }
+  };
+
+  useEffect(() => {
+    console.log('Group ID:', groupId); // Debug log
+    if (groupId) {
+      fetchGroupData();
+    }
+  }, [groupId]);
+
+  const renderStories = () => (
+    <View style={styles.tabContent}>
+      <CreateStories groupId={groupId as string} onStoryCreated={fetchGroupData} members={members} />
+      <FlatList
+        data={stories}
+        keyExtractor={item => item.id.toString()}
+        renderItem={({ item }) => (
+          <View style={styles.item}>
+            <Text>{item.content}</Text>
+            <Text style={styles.meta}>By: {item.user?.name || 'Unknown'}</Text>
+            <Text style={styles.meta}>Expires: {new Date(item.expires_at).toLocaleString()}</Text>
+          </View>
+        )}
+        ListEmptyComponent={<Text>No stories available.</Text>}
+      />
+    </View>
+  );
+
+  const renderPosts = () => (
+    <View style={styles.tabContent}>
+      <CreatePost groupId={groupId as string} onPostCreated={fetchGroupData} />
+      <FlatList
+        data={posts}
+        keyExtractor={item => item.id.toString()}
+        renderItem={({ item }) => (
+          <View style={styles.item}>
+            <Text>{item.content}</Text>
+            <Text style={styles.meta}>By: {item.user?.name || 'Unknown'}</Text>
+            <Text style={styles.meta}>Posted: {new Date(item.created_at).toLocaleString()}</Text>
+          </View>
+        )}
+        ListEmptyComponent={<Text>No posts available.</Text>}
+      />
+    </View>
+  );
+
+  const renderMembers = () => (
+    <View style={styles.tabContent}>
+      <FlatList
+        data={members}
+        keyExtractor={item => item.user_id.toString()}
+        renderItem={({ item }) => (
+          <View style={styles.item}>
+            <Text>{item.user_name || item.user_email}</Text>
+          </View>
+        )}
+        ListEmptyComponent={<Text>No members available.</Text>}
+      />
+    </View>
+  );
+
+  if (loading) {
+    return <ActivityIndicator size="large" color="#22c55e" style={styles.centered} />;
+  }
+
+  if (error || !group) {
+    return (
+      <View style={styles.centered}>
+        <Text>{error || 'Group not found.'}</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>{group.name}</Text>
+      <Text style={styles.description}>{group.description || 'No description.'}</Text>
+      <Text style={styles.meta}>Created by: {group.creator?.name || 'Unknown'}</Text>
+      <Text style={styles.meta}>Share Code: {group.share_code || 'N/A'}</Text>
+      <Button
+        title={group.is_shared ? 'Disable Sharing' : 'Enable Sharing'}
+        onPress={handleToggleSharing}
+      />
+      {qrCode && <Text style={styles.qrPlaceholder}>QR Code: {qrCode}</Text>}
+
+      <View style={styles.tabContainer}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'Stories' && styles.activeTab]}
+          onPress={() => setActiveTab('Stories')}
+        >
+          <Text style={styles.tabText}>Stories</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'Posts' && styles.activeTab]}
+          onPress={() => setActiveTab('Posts')}
+        >
+          <Text style={styles.tabText}>Posts</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'Members' && styles.activeTab]}
+          onPress={() => setActiveTab('Members')}
+        >
+          <Text style={styles.tabText}>Members</Text>
+        </TouchableOpacity>
+      </View>
+
+      {activeTab === 'Stories' && renderStories()}
+      {activeTab === 'Posts' && renderPosts()}
+      {activeTab === 'Members' && renderMembers()}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#f3f4f6',
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#1f2937',
+  },
+  description: {
+    fontSize: 16,
+    color: '#4b5563',
+    marginBottom: 10,
+  },
+  meta: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginBottom: 5,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    marginBottom: 20,
+  },
+  tab: {
+    flex: 1,
+    padding: 10,
+    alignItems: 'center',
+    backgroundColor: '#e5e7eb',
+    borderRadius: 5,
+    marginHorizontal: 5,
+  },
+  activeTab: {
+    backgroundColor: '#22c55e',
+  },
+  tabText: {
+    fontSize: 16,
+    color: '#1f2937',
+  },
+  tabContent: {
+    flex: 1,
+  },
+  item: {
+    padding: 15,
+    backgroundColor: '#fff',
+    borderRadius: 5,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  qrPlaceholder: {
+    marginVertical: 10,
+    color: '#4b5563',
+  },
+});
+
+export default GroupDetailScreen;
