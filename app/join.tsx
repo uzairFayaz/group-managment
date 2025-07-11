@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BarCodeScanner } from 'expo-barcode-scanner';
-import { router, useRouter } from 'expo-router';
-import React, { useState, useEffect } from 'react';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -48,7 +48,7 @@ const JoinGroupScreen = () => {
       await joinGroup(shareCode);
       setMessage('Successfully joined the group!');
       setErrors([]);
-      setTimeout(() => router.replace('/'), 2000); // Redirect to home or group list
+      setTimeout(() => router.replace(`/profile`), 2000); // Redirect to home or group list
     } catch (err: any) {
       console.error('Join Group Error:', err);
       const errorMessage = err.response?.data?.message || 'Failed to join group.';

@@ -3,17 +3,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { verifyOtp } from '../../src/api/api';
+import { verifyOtp } from '../src/api/api';
 
 const OtpVerificationScreen = () => {
   const [otp, setOtp] = useState('');
@@ -37,7 +37,7 @@ const OtpVerificationScreen = () => {
       await verifyOtp(otp);
       setMessage('OTP verified successfully!');
       setErrors([]);
-      setTimeout(() => router.push('/auth/password-reset'), 2000);
+      setTimeout(() => router.push('/login'), 2000);
     } catch (err: any) {
       console.error('OTP Verification Error:', err);
       const errorMessage = err.response?.data?.message || 'Invalid OTP.';

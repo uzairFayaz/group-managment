@@ -1,26 +1,34 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router } from 'expo-router';
-import React, { useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { resetPassword } from '../src/api/api';
 
 const PasswordResetScreen = () => {
+  const { email } = useLocalSearchParams<{ email?: string }>();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState('');
   const [errors, setErrors] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+      if (!email) {
+        setMessage('Email not provided. Please try again.');
+        setErrors(['Email is missing.']);
+      }
+    }, [email]);
 
   const handleResetPassword = async () => {
     if (!password.trim() || !confirmPassword.trim()) {
@@ -40,7 +48,7 @@ const PasswordResetScreen = () => {
       if (!token) {
         throw new Error('Missing token');
       }
-      await resetPassword(password);
+      await resetPassword(email, password);
       setMessage('Password reset successful!');
       setErrors([]);
       setTimeout(() => router.replace('/login'), 2000); // Redirect to login
@@ -66,6 +74,17 @@ const PasswordResetScreen = () => {
         </View>
 
         <View style={styles.card}>
+          <Text style={styles.label}>Email Address</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={email || ''}
+                      onChangeText={(text) => setEmail(text)} // Allow manual override if needed
+                      placeholder="Enter your email"
+                      placeholderTextColor="#999"
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      editable={false} // Disable editing if passed via params
+                    />
           <Text style={styles.label}>New Password</Text>
           <TextInput
             style={styles.input}
