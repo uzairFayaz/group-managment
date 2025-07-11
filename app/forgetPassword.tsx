@@ -1,17 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-    ViewStyle,
+  ActivityIndicator,
+  Alert,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { requestForgetPassword } from '../src/api/api';
 
@@ -33,7 +33,7 @@ const ForgetPasswordScreen = () => {
       await requestForgetPassword(email);
       setMessage('Password reset link sent to your email.');
       setErrors([]);
-      setTimeout(() => router.push('/verifyForgetPassword'), 2000);
+      setTimeout(() => router.push(`/verifyForgetPassword?email=${encodeURIComponent(email)}`), 2000);
     } catch (err: any) {
       console.error('Forget Password Error:', err);
       const errorMessage = err.response?.data?.message || 'Failed to send reset link.';
@@ -47,7 +47,7 @@ const ForgetPasswordScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent as ViewStyle}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <TouchableOpacity style={{ pointerEvents: 'auto' }} onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={24} color="#4361ee" />

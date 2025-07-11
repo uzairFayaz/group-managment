@@ -43,7 +43,8 @@ export const register = async (
   name: string,
   email: string,
   password: string,
-  password_confirmation: string
+  password_confirmation: string,
+  phone :string
 ) => {
   await getCsrfCookie();
   const response = await api.post("/api/register", {
@@ -51,6 +52,7 @@ export const register = async (
     email,
     password,
     password_confirmation,
+    phone
   });
   return response.data;
 };
@@ -145,7 +147,15 @@ export const requestForgetPassword = async (email: string) => {
   const response = await api.post('/api/forget-password', { email });
   return response.data;
 };
-
+export const handleApiError = (error: any) => {
+  if (error.response) {
+    return {
+      message: error.response.data.message || 'An error occurred.',
+      errors: error.response.data.errors || [],
+    };
+  }
+  return { message: 'Network error. Please try again.', errors: [] };
+};
 // Toggle Group Sharing
 export const toggleGroupSharing = async (groupId: string) => {
   await getCsrfCookie();
@@ -156,10 +166,10 @@ export const toggleGroupSharing = async (groupId: string) => {
   return response.data;
 };
 
-export const verifyForgetPassword = async (code: string) => {
+export const verifyForgetPassword = async ({email,otp}:{email: string, otp: string}) => {
   await getCsrfCookie();
   await setupAxios();
-  const response = await api.post('/api/verify-forget-password', { code });
+  const response = await api.post('/api/verify-forget-password', { email, otp });
   return response.data;
 };
 export const verifyOtp = async (otp: string) => {
@@ -168,11 +178,12 @@ export const verifyOtp = async (otp: string) => {
   const response = await api.post('/api/verify-otp', { otp });
   return response.data;
 };
+
 // Reset password with new password
-export const resetPassword = async (password: string) => {
+export const resetPassword = async ({ email, password }: { email: string; password: string }) => {
   await getCsrfCookie();
   await setupAxios();
-  const response = await api.post('/api/password-reset', { password });
+  const response = await api.post('reset-password', { email, password });
   return response.data;
 };
 // Create a Story
