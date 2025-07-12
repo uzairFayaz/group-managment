@@ -1,3 +1,4 @@
+
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
@@ -14,7 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { deleteGroup as apiDeleteGroup, getGroups, getUser } from '../src/api/api';
+import { deleteG, getGroups, getUser } from '../src/api/api';
 
 interface Group {
   id: number;
@@ -96,7 +97,7 @@ const ProfileScreen = () => {
     }
   };
 
-  const deleteGroup = async (id: number) => {
+  const deleteGroup = async (groupId: number) => {
     Alert.alert('Confirm Delete', 'Are you sure?', [
       { text: 'Cancel' },
       {
@@ -108,9 +109,11 @@ const ProfileScreen = () => {
             if (!token) {
               throw new Error('Missing token');
             }
-            await apiDeleteGroup(id);
+            console.log('Attempting to delete group with ID:', groupId); // Debug log
+            const response = await deleteG(groupId);
+            console.log(response);
             setMessage('Deleted group');
-            fetchGroups();
+            await fetchGroups(); // Ensure async refresh
           } catch (err) {
             console.error('Delete Group Error:', {
               message: err.message,
@@ -119,6 +122,7 @@ const ProfileScreen = () => {
             });
             const errorMessage = err.response?.data?.message || 'Failed to delete group';
             setMessage(errorMessage);
+            Alert.alert('Error', errorMessage); // Notify user of failure
           }
         },
       },
@@ -197,9 +201,9 @@ const ProfileScreen = () => {
                   </View>
                   {item.created_by === user.id && (
                     <TouchableOpacity
-                      style={{ pointerEvents: 'auto' }}
-                      onPress={(e) => {
-                        e.stopPropagation();
+                      style={styles.deleteButton}
+                      onPress={() => {
+                        console.log("delete press for", item.id);
                         deleteGroup(item.id);
                       }}
                     >
@@ -352,6 +356,9 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
     paddingHorizontal: 20,
+  },
+  deleteButton: {
+    padding: 5,
   },
 });
 

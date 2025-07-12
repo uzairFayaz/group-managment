@@ -87,10 +87,10 @@ export const joinGroup = async (code: string) => {
   return response.data;
 };
 
-export const deleteGroup = async (groupId: number) =>{
+export const deleteG = async (groupId: number) =>{
   await getCsrfCookie();
 await setupAxios();
-const response = await axios.delete(`/api/groups/${groupId}`);
+const response = await api.delete(`/api/groups/${groupId}`);
 return response.data;
 };
 
