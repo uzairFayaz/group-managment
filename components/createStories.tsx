@@ -49,6 +49,7 @@ const CreateStories: React.FC<CreateStoriesProps> = ({ groupId, onStoryCreated, 
     );
 
     setMessage(response.data.message || 'Story created successfully.');
+    console.log(response.data)
     setContent('');
     setSelectedMemberIds([]);
     setErrors([]);

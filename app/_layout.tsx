@@ -17,9 +17,9 @@ export default function RootLayout() {
         <Stack.Screen name="join" options={{ title: 'Join Group', headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="register" options={{ title: 'Register' }} />
-        <Stack.Screen name="profile" options={{ title: 'User Profile' }} />
+        <Stack.Screen name="profile" options={{ title: 'User Profile', headerShown:false }} />
         <Stack.Screen name="groups" options={{ title: 'Groups' }} />
-        <Stack.Screen name="groups/[groupId]" options={{ title: 'Group Details' }} />
+        <Stack.Screen name="groups/[groupId]" options={{ title: 'Group Details', headerShown:false }} />
       </Stack>
       <StatusBar style="auto" />
     </ErrorBoundary>

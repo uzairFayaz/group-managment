@@ -6,7 +6,7 @@ const api = axios.create({
   withCredentials: true,
 });
 
-const setupAxios = async () => {
+export const setupAxios = async () => {
   const token = await AsyncStorage.getItem("token");
   console.log("Auth Token:", token ? "Present" : "Missing"); // Debug log
   if (token) {
@@ -15,7 +15,7 @@ const setupAxios = async () => {
 };
 
 // Fetch CSRF cookie
-const getCsrfCookie = async () => {
+export const getCsrfCookie = async () => {
   try {
     console.log("Fetching CSRF cookie..."); // Debug log
     const response = await api.get("/sanctum/csrf-cookie");
@@ -120,7 +120,6 @@ export const getGroupStories = async (groupId: string) => {
   console.log("Stories Response:", response.data); // Debug log
   return response.data;
 };
-
 // Fetch Group Posts
 export const getGroupPosts = async (groupId: string) => {
   await setupAxios();
