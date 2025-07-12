@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Clipboard from "expo-clipboard";
-import { router, useLocalSearchParams } from "expo-router";
-import React, { useEffect, useState } from "react";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Clipboard from 'expo-clipboard';
+import { router, useLocalSearchParams } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -14,17 +14,17 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
-} from "react-native";
-import CreatePost from "../../components/createPosts";
-import CreateStories from "../../components/createStories";
+  View,
+} from 'react-native';
+import CreatePost from '../../components/createPosts';
+import CreateStories from '../../components/createStories';
 import {
   getGroupDetails,
   getGroupMembers,
   getGroupPosts,
   getGroupStories,
   toggleGroupSharing,
-} from "../../src/api/api";
+} from '../../src/api/api';
 
 interface Group {
   id: number;
@@ -62,54 +62,57 @@ const GroupDetailScreen = () => {
   const [members, setMembers] = useState<Member[]>([]);
   const [stories, setStories] = useState<Story[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
-  const [copySuccess, setCopySuccess] = useState("");
-  const [message, setMessage] = useState("");
+  const [copySuccess, setCopySuccess] = useState('');
+  const [message, setMessage] = useState<string | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"Stories" | "Posts" | "Members">(
-    "Stories"
-  );
-  const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState<'Stories' | 'Posts' | 'Members'>('Stories');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchGroupData = async () => {
     try {
-      const token = await AsyncStorage.getItem("token");
+      const token = await AsyncStorage.getItem('token');
       if (!token) {
-        Alert.alert("Error", "Please log in.", [
-          { text: "OK", onPress: () => router.replace("/login") },
+        Alert.alert('Error', 'Please log in.', [
+          { text: 'OK', onPress: () => router.replace('/login') },
         ]);
         return;
       }
 
       setLoading(true);
-      const [groupData, membersData, storiesData, postsData] =
-        await Promise.all([
-          getGroupDetails(groupId as string),
-          getGroupMembers(groupId as string),
-          getGroupStories(groupId as string),
-          getGroupPosts(groupId as string),
-        ]);
+      const [groupData, membersData, storiesData, postsData] = await Promise.all([
+        getGroupDetails(groupId as string),
+        getGroupMembers(groupId as string),
+        getGroupStories(groupId as string),
+        getGroupPosts(groupId as string),
+      ]);
+      
+      console.log('Group Response:', groupData);
+      console.log('Members Response:', membersData);
+      console.log('Stories Response:', storiesData);
+      console.log('Posts Response:', postsData);
+      
+      // Debug state updates
       setGroup(groupData);
-      setMembers(
-        Array.isArray(membersData) ? membersData : membersData?.data || []
-      );
-      setStories(storiesData || []);
-      setPosts(postsData || []);
-      setMessage("");
+      setMembers(Array.isArray(membersData) ? membersData : membersData?.data || []);
+      setStories(storiesData.data?.stories || []);
+      console.log('Stories State:', storiesData || []);
+      setPosts(postsData.data?.posts || []);
+      console.log('Posts State:', postsData || []);
+      setMessage('');
       setErrors([]);
     } catch (err: any) {
-      console.error("Fetch Group Data Error:", err);
-      const errorMessage =
-        err.response?.data?.message || "Failed to load group data.";
+      console.error('Fetch Group Data Error:', err.response?.data || err.message);
+      const errorMessage = err.response?.data?.message || 'Failed to load group data.';
       setMessage(errorMessage);
       setErrors(err.response?.data?.errors || []);
       if ([401, 403].includes(err.response?.status)) {
-        await AsyncStorage.removeItem("token");
-        Alert.alert("Error", "Session expired. Please log in.", [
-          { text: "OK", onPress: () => router.replace("/login") },
+        await AsyncStorage.removeItem('token');
+        Alert.alert('Error', 'Session expired. Please log in.', [
+          { text: 'OK', onPress: () => router.replace('/login') },
         ]);
       } else {
-        Alert.alert("Error", errorMessage);
+        Alert.alert('Error', errorMessage);
       }
     } finally {
       setLoading(false);
@@ -118,26 +121,23 @@ const GroupDetailScreen = () => {
 
   const handleToggleSharing = async () => {
     try {
-      const token = await AsyncStorage.getItem("token");
+      const token = await AsyncStorage.getItem('token');
       if (!token) {
-        Alert.alert("Error", "Please log in.", [
-          { text: "OK", onPress: () => router.replace("/login") },
+        Alert.alert('Error', 'Please log in.', [
+          { text: 'OK', onPress: () => router.replace('/login') },
         ]);
         return;
       }
       const response = await toggleGroupSharing(groupId as string);
-      setGroup((prev) =>
-        prev ? { ...prev, is_shared: response.data.is_shared } : null
-      );
-      setMessage(response.message || "Sharing updated.");
-      setTimeout(() => setMessage(""), 3000);
+      setGroup((prev) => (prev ? { ...prev, is_shared: response.data.is_shared } : null));
+      setMessage(response.message || 'Sharing updated.');
+      setTimeout(() => setMessage(null), 3000);
     } catch (err: any) {
-      console.error("Toggle Sharing Error:", err);
-      const errorMessage =
-        err.response?.data?.message || "Failed to toggle sharing.";
+      console.error('Toggle Sharing Error:', err);
+      const errorMessage = err.response?.data?.message || 'Failed to toggle sharing.';
       setMessage(errorMessage);
       setErrors(err.response?.data?.errors || []);
-      Alert.alert("Error", errorMessage);
+      Alert.alert('Error', errorMessage);
     }
   };
 
@@ -145,11 +145,11 @@ const GroupDetailScreen = () => {
     if (group?.share_code) {
       try {
         await Clipboard.setStringAsync(group.share_code);
-        setCopySuccess("Copied!");
-        setTimeout(() => setCopySuccess(""), 2000);
+        setCopySuccess('Copied!');
+        setTimeout(() => setCopySuccess(''), 2000);
       } catch {
-        setCopySuccess("Failed to copy.");
-        setTimeout(() => setCopySuccess(""), 2000);
+        setCopySuccess('Failed to copy.');
+        setTimeout(() => setCopySuccess(''), 2000);
       }
     }
   };
@@ -164,93 +164,92 @@ const GroupDetailScreen = () => {
     }
   }, [groupId]);
 
-  // Filter members based on search query
-  const filteredMembers = members.filter(member => 
+  const filteredMembers = members.filter((member) =>
     member.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     member.user_email?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const renderStories = () => (
-    <View style={styles.tabContent}>
-      <CreateStories
-        groupId={groupId as string}
-        onStoryCreated={fetchGroupData}
-        members={members}
-      />
-      <FlatList
-        data={stories}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <View style={styles.storyItem}>
-            <Image
-              style={styles.storyAvatar}
-              source={{ uri: `https://i.pravatar.cc/100?u=${item.user?.name || 'user'}` }}
-            />
-            <View style={styles.storyContent}>
-              <Text style={styles.storyText}>{item.content}</Text>
-              <Text style={styles.storyMeta}>
-                By: {item.user?.name || "Unknown"} • 
-                Expires: {new Date(item.expires_at).toLocaleDateString()}
-              </Text>
-            </View>
-          </View>
-        )}
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Ionicons name="image-outline" size={48} color="#ccc" />
-            <Text style={styles.emptyText}>No stories available yet</Text>
-          </View>
-        }
-      />
-    </View>
-  );
-
-  const renderPosts = () => (
-    <View style={styles.tabContent}>
-      <CreatePost groupId={groupId as string} onPostCreated={fetchGroupData} />
-      <FlatList
-        data={posts}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <View style={styles.postCard}>
-            <View style={styles.postHeader}>
-              <Image
-                style={styles.postAvatar}
-                source={{ uri: `https://i.pravatar.cc/100?u=${item.user?.name || 'user'}` }}
-              />
-              <View>
-                <Text style={styles.postUser}>{item.user?.name || "Unknown"}</Text>
-                <Text style={styles.postTime}>
-                  {new Date(item.created_at).toLocaleDateString()}
-                </Text>
+  const renderStories = () => {
+    console.log('Rendering Stories:', stories.length);
+    return (
+      <View style={styles.tabContent}>
+        <CreateStories groupId={groupId as string} onStoryCreated={fetchGroupData} members={members} />
+        <FlatList
+          data={stories}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <View style={styles.storyCard}>
+              <View style={styles.storyHeader}>
+                <Image style={styles.avatar} source={{ uri: `https://i.pravatar.cc/100?u=${item.user?.name || 'user'}` }} />
+                <View style={styles.storyInfo}>
+                  <Text style={styles.storyName}>{item.user?.name || 'Unknown'}</Text>
+                  <Text style={styles.storyTime}>2 hours ago</Text>
+                </View>
+              </View>
+              <Text style={styles.storyContent}>{item.content || 'No content'}</Text>
+              <View style={styles.storyReactions}>
+                <View style={styles.reactionItem}>
+                  <Ionicons name="fast-food" size={20} color="#666" />
+                  <Text style={styles.reactionCount}>24</Text>
+                </View>
+                <View style={styles.reactionItem}>
+                  <Ionicons name="heart" size={20} color="#e74c3c" />
+                  <Text style={styles.reactionCount}>8</Text>
+                </View>
               </View>
             </View>
-            <Text style={styles.postContent}>{item.content}</Text>
-            <View style={styles.postActions}>
-              <TouchableOpacity style={styles.postAction}>
-                <Ionicons name="heart-outline" size={20} color="#666" />
-                <Text style={styles.actionText}>Like</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.postAction}>
-                <Ionicons name="chatbubble-outline" size={20} color="#666" />
-                <Text style={styles.actionText}>Comment</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.postAction}>
-                <Ionicons name="share-social-outline" size={20} color="#666" />
-                <Text style={styles.actionText}>Share</Text>
-              </TouchableOpacity>
+          )}
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <Ionicons name="image-outline" size={48} color="#ccc" />
+              <Text style={styles.emptyText}>No stories available yet</Text>
             </View>
-          </View>
-        )}
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Ionicons name="document-text-outline" size={48} color="#ccc" />
-            <Text style={styles.emptyText}>No posts available yet</Text>
-          </View>
-        }
-      />
-    </View>
-  );
+          }
+        />
+      </View>
+    );
+  };
+
+  const renderPosts = () => {
+    console.log('Rendering Posts:', posts.length);
+    return (
+      <View style={styles.tabContent}>
+        <CreatePost groupId={groupId as string} onPostCreated={fetchGroupData} />
+        <FlatList
+          data={posts}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <View style={styles.postCard}>
+              <View style={styles.postHeader}>
+                <Image style={styles.avatar} source={{ uri: `https://i.pravatar.cc/100?u=${item.user?.name || 'user'}` }} />
+                <View style={styles.postInfo}>
+                  <Text style={styles.postName}>{item.user?.name || 'Unknown'}</Text>
+                  <Text style={styles.postTime}>{item.created_at}</Text>
+                </View>
+              </View>
+              <Text style={styles.postContent}>{item.content || 'No content'}</Text>
+              <View style={styles.postReactions}>
+                <View style={styles.reactionItem}>
+                  <Ionicons name="fast-food" size={20} color="#666" />
+                  <Text style={styles.reactionCount}>25</Text>
+                </View>
+                <View style={styles.reactionItem}>
+                  <Ionicons name="heart" size={20} color="#e74c3c" />
+                  <Text style={styles.reactionCount}>8</Text>
+                </View>
+              </View>
+            </View>
+          )}
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <Ionicons name="document-text-outline" size={48} color="#ccc" />
+              <Text style={styles.emptyText}>No posts available yet</Text>
+            </View>
+          }
+        />
+      </View>
+    );
+  };
 
   const renderMembers = () => (
     <View style={styles.tabContent}>
@@ -264,16 +263,12 @@ const GroupDetailScreen = () => {
           onChangeText={setSearchQuery}
         />
       </View>
-      
       <FlatList
         data={filteredMembers}
         keyExtractor={(item) => item.user_id.toString()}
         renderItem={({ item }) => (
           <View style={styles.memberCard}>
-            <Image
-              style={styles.memberAvatar}
-              source={{ uri: `https://i.pravatar.cc/100?u=${item.user_email}` }}
-            />
+            <Image style={styles.avatar} source={{ uri: `https://i.pravatar.cc/100?u=${item.user_email}` }} />
             <View style={styles.memberInfo}>
               <Text style={styles.memberName}>{item.user_name || item.user_email}</Text>
               <Text style={styles.memberEmail}>{item.user_email}</Text>
@@ -287,9 +282,8 @@ const GroupDetailScreen = () => {
           </View>
         }
       />
-      
       <TouchableOpacity style={styles.inviteButton}>
-        <Ionicons name="person-add" size={20} color="#4361ee" />
+        <Ionicons name="person-add" size={20} color="#4a90e2" />
         <Text style={styles.inviteText}>Invite Members</Text>
       </TouchableOpacity>
     </View>
@@ -298,7 +292,7 @@ const GroupDetailScreen = () => {
   if (loading) {
     return (
       <SafeAreaView style={styles.centered}>
-        <ActivityIndicator size="large" color="#4361ee" />
+        <ActivityIndicator size="large" color="#4a90e2" />
       </SafeAreaView>
     );
   }
@@ -307,12 +301,10 @@ const GroupDetailScreen = () => {
     return (
       <SafeAreaView style={styles.centered}>
         <View style={styles.messageContainer}>
-          <Text>{message || "Group not found."}</Text>
+          <Text>{message || 'Group not found.'}</Text>
           {errors.length > 0 &&
             errors.map((err, idx) => (
-              <Text key={idx} style={styles.error}>
-                {err}
-              </Text>
+              <Text key={idx} style={styles.error}>{err || 'Unknown error'}</Text>
             ))}
         </View>
       </SafeAreaView>
@@ -321,90 +313,70 @@ const GroupDetailScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.groupName}>{group.name}</Text>
-        <TouchableOpacity>
-          <Ionicons name="ellipsis-vertical" size={24} color="#000" />
-        </TouchableOpacity>
-      </View>
-      
       <ScrollView>
-        {message && (
-          <View style={styles.messageContainer}>
-            <Text
-              style={[
-                styles.message,
-                errors.length > 0 ? styles.error : styles.success,
-              ]}
-            >
-              {message}
-            </Text>
-            {errors.length > 0 &&
-              errors.map((err, idx) => (
-                <Text key={idx} style={styles.error}>
-                  {err}
-                </Text>
-              ))}
+        <View>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+              <Ionicons name="arrow-back" size={24} color="#000" />
+            </TouchableOpacity>
+            <Text style={styles.groupName}>{group.name}</Text>
+            <View style={styles.headerRight} />
           </View>
-        )}
 
-        {/* Group Info */}
-        <View style={styles.groupInfo}>
-          <Text style={styles.memberCount}>{members.length} members</Text>
-          <Text style={styles.description}>{group.description || "No description."}</Text>
-          
-          <View style={styles.sharingToggle}>
-            <Text style={styles.toggleLabel}>Enable Sharing</Text>
-            <TouchableOpacity 
-              style={[styles.toggle, group.is_shared ? styles.toggleOn : styles.toggleOff]}
-              onPress={handleToggleSharing}
-            >
-              <View style={[styles.toggleCircle, group.is_shared ? styles.toggleCircleOn : null]} />
-            </TouchableOpacity>
+          <View style={styles.groupInfoCard}>
+            <Text style={styles.groupTitle}>{group.name}</Text>
+            <Text style={styles.groupDescription}>{group.description || 'No description.'}</Text>
+            <Text style={styles.memberCount}>{members.length} members</Text>
           </View>
-        </View>
-        
-        {/* Share Code Section */}
-        {group.is_shared && group.share_code && (
-          <View style={styles.shareSection}>
-            <View style={styles.shareCodeContainer}>
-              <Text style={styles.shareCodeLabel}>Share Code:</Text>
-              <Text style={styles.shareCode}>{group.share_code}</Text>
-              <TouchableOpacity onPress={copyShareCode} style={styles.copyButton}>
-                <Text style={styles.copyButtonText}>Copy</Text>
-              </TouchableOpacity>
-              {copySuccess && <Text style={styles.copySuccess}>{copySuccess}</Text>}
-              <TouchableOpacity
-                style={[styles.qrButton, { pointerEvents: 'auto' }]}
-                onPress={navigateToQr}
-              >
-                <Text style={styles.qrButtonText}>Show QR</Text>
-              </TouchableOpacity>
+
+          <View style={styles.divider} />
+
+          <View style={styles.sharingSection}>
+            <Text style={styles.sectionTitle}>Enable Sharing</Text>
+            
+            <View style={styles.shareCodeRow}>
+              <Text style={styles.shareCodeLabel}>Share Code</Text>
+              <Text style={styles.shareCode}>{group.share_code || 'Not available'}</Text>
             </View>
-          </View>
-        )}
-        
-        {/* Tab Navigation */}
-        <View style={styles.tabContainer}>
-          {(["Stories", "Posts", "Members"] as const).map(tab => (
-            <TouchableOpacity
-              key={tab}
-              style={[styles.tab, activeTab === tab && styles.activeTab]}
-              onPress={() => setActiveTab(tab)}
-            >
-              <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>{tab}</Text>
+            
+            <TouchableOpacity onPress={copyShareCode} style={styles.copyButton}>
+              <Text style={styles.copyButtonText}>Copy</Text>
             </TouchableOpacity>
-          ))}
+            
+            {copySuccess ? (
+              <Text style={styles.copySuccess}>{copySuccess}</Text>
+            ) : null}
+            
+            <TouchableOpacity style={styles.qrButton} onPress={navigateToQr}>
+              <Text style={styles.qrButtonText}>Show QR</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.tabContainer}>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'Stories' && styles.activeTab]}
+              onPress={() => setActiveTab('Stories')}
+            >
+              <Text style={[styles.tabText, activeTab === 'Stories' && styles.activeTabText]}>Stories</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'Posts' && styles.activeTab]}
+              onPress={() => setActiveTab('Posts')}
+            >
+              <Text style={[styles.tabText, activeTab === 'Posts' && styles.activeTabText]}>Posts</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'Members' && styles.activeTab]}
+              onPress={() => setActiveTab('Members')}
+            >
+              <Text style={[styles.tabText, activeTab === 'Members' && styles.activeTabText]}>Members</Text>
+            </TouchableOpacity>
+          </View>
+
+          {activeTab === 'Stories' && renderStories()}
+          {activeTab === 'Posts' && renderPosts()}
+          {activeTab === 'Members' && renderMembers()}
         </View>
-        
-        {/* Tab Content */}
-        {activeTab === "Stories" && renderStories()}
-        {activeTab === "Posts" && renderPosts()}
-        {activeTab === "Members" && renderMembers()}
       </ScrollView>
     </SafeAreaView>
   );
@@ -413,7 +385,7 @@ const GroupDetailScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#fff',
   },
   centered: {
     flex: 1,
@@ -424,124 +396,111 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 15,
+    padding: 16,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#e0e0e0',
+  },
+  backButton: {
+    padding: 4,
+  },
+  headerRight: {
+    width: 24,
   },
   groupName: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
+    color: '#000',
   },
-  groupInfo: {
-    padding: 20,
-    backgroundColor: '#fff',
-    marginBottom: 10,
+  groupInfoCard: {
+    padding: 16,
+  },
+  groupTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 8,
+    color: '#000',
+  },
+  groupDescription: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 8,
+    lineHeight: 22,
   },
   memberCount: {
     fontSize: 16,
     color: '#666',
-    marginBottom: 10,
   },
-  description: {
-    fontSize: 16,
-    lineHeight: 22,
-    marginBottom: 20,
+  divider: {
+    height: 8,
+    backgroundColor: '#f5f5f5',
   },
-  sharingToggle: {
+  sharingSection: {
+    padding: 16,
+    backgroundColor: '#fff',
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 16,
+    color: '#000',
+  },
+  shareCodeRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 10,
-  },
-  toggleLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  toggle: {
-    width: 50,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: 'center',
-    padding: 2,
-  },
-  toggleOn: {
-    backgroundColor: '#4361ee',
-  },
-  toggleOff: {
-    backgroundColor: '#e0e0e0',
-  },
-  toggleCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#fff',
-  },
-  toggleCircleOn: {
-    transform: [{ translateX: 22 }],
-  },
-  shareSection: {
-    padding: 20,
-    backgroundColor: '#fff',
-    marginBottom: 10,
-  },
-  shareCodeContainer: {
-    flexDirection: 'column',
-    alignItems: 'flex-start',
+    marginBottom: 8,
   },
   shareCodeLabel: {
     fontSize: 16,
-    marginRight: 10,
-    marginBottom: 5,
+    color: '#666',
+    marginRight: 8,
   },
   shareCode: {
-    flex: 1,
-    backgroundColor: '#eef2ff',
-    padding: 10,
-    borderRadius: 8,
-    fontFamily: 'monospace',
-    marginBottom: 10,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#000',
   },
   copyButton: {
-    backgroundColor: '#4361ee',
+    backgroundColor: '#4a90e2',
     paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 8,
-    marginBottom: 10,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    marginTop: 8,
   },
   copyButtonText: {
     color: '#fff',
     fontWeight: '500',
-  },
-  copySuccess: {
-    color: '#15803d',
-    marginBottom: 10,
+    fontSize: 16,
   },
   qrButton: {
-    backgroundColor: '#4361ee',
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 8,
-    alignSelf: 'flex-start',
+    backgroundColor: '#4a90e2',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 6,
+    alignItems: 'center',
+    marginTop: 16,
   },
   qrButtonText: {
     color: '#fff',
-    fontWeight: '500',
+    fontWeight: '600',
+    fontSize: 16,
   },
   tabContainer: {
     flexDirection: 'row',
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#e0e0e0',
   },
   tab: {
     flex: 1,
-    paddingVertical: 15,
+    paddingVertical: 16,
     alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
   },
   activeTab: {
-    borderBottomWidth: 2,
-    borderBottomColor: '#4361ee',
+    borderBottomColor: '#4a90e2',
   },
   tabText: {
     fontSize: 16,
@@ -549,142 +508,148 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   activeTabText: {
-    color: '#4361ee',
+    color: '#4a90e2',
+    fontWeight: '600',
   },
   tabContent: {
-    padding: 15,
+    padding: 16,
     backgroundColor: '#fff',
-    marginBottom: 10,
-    flex: 1,
   },
-  storyItem: {
-    flexDirection: 'row',
-    paddingVertical: 15,
+  storyCard: {
+    backgroundColor: '#fff',
+    padding: 16,
+    marginBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
-  storyAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 15,
+  storyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
   },
-  storyContent: {
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 12,
+  },
+  storyInfo: {
     flex: 1,
   },
-  storyText: {
+  storyName: {
     fontSize: 16,
-    marginBottom: 5,
+    fontWeight: '600',
+    color: '#000',
   },
-  storyMeta: {
+  storyTime: {
+    fontSize: 14,
+    color: '#888',
+  },
+  storyContent: {
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 12,
+    lineHeight: 22,
+  },
+  storyReactions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  reactionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 24,
+  },
+  reactionCount: {
+    marginLeft: 6,
     fontSize: 14,
     color: '#666',
   },
   postCard: {
     backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: '#eee',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 1,
-    elevation: 1,
+    padding: 16,
+    marginBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
   },
   postHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
   },
-  postAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 10,
+  postInfo: {
+    flex: 1,
   },
-  postUser: {
-    fontWeight: '600',
+  postName: {
     fontSize: 16,
+    fontWeight: '600',
+    color: '#000',
   },
   postTime: {
-    color: '#666',
-    fontSize: 12,
+    fontSize: 14,
+    color: '#888',
   },
   postContent: {
     fontSize: 16,
+    color: '#333',
+    marginBottom: 12,
     lineHeight: 22,
-    marginBottom: 15,
   },
-  postActions: {
-    flexDirection: 'row',
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-    paddingTop: 10,
-  },
-  postAction: {
+  postReactions: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 20,
   },
-  actionText: {
-    marginLeft: 5,
-    color: '#666',
+  memberCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  memberInfo: {
+    marginLeft: 12,
+  },
+  memberName: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333',
+  },
+  memberEmail: {
+    fontSize: 14,
+    color: '#888',
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f0f0f0',
-    borderRadius: 10,
-    paddingHorizontal: 15,
-    marginBottom: 15,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginBottom: 16,
   },
   searchIcon: {
-    marginRight: 10,
+    marginRight: 8,
   },
   searchInput: {
     flex: 1,
     height: 40,
     fontSize: 16,
-  },
-  memberCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  memberAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 15,
-  },
-  memberInfo: {
-    flex: 1,
-  },
-  memberName: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  memberEmail: {
-    color: '#666',
+    color: '#333',
   },
   inviteButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 15,
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: '#4361ee',
-    borderRadius: 10,
+    padding: 16,
+    backgroundColor: '#f0f7ff',
+    borderRadius: 8,
+    marginTop: 16,
   },
   inviteText: {
-    marginLeft: 10,
-    color: '#4361ee',
+    marginLeft: 8,
+    color: '#4a90e2',
     fontWeight: '500',
+    fontSize: 16,
   },
   emptyState: {
     alignItems: 'center',
@@ -692,22 +657,29 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#666',
-    marginTop: 10,
+    color: '#888',
+    marginTop: 16,
   },
-  messageContainer: { 
-    marginBottom: 10,
+  messageContainer: {
     padding: 15,
+    backgroundColor: '#fff',
+    marginBottom: 10,
+    borderRadius: 8,
   },
-  message: { 
+  message: {
     fontSize: 16,
     textAlign: 'center',
   },
-  success: { 
-    color: '#15803d' 
+  success: {
+    color: '#2ecc71',
   },
-  error: { 
-    color: '#dc2626' 
+  error: {
+    color: '#e74c3c',
+  },
+  copySuccess: {
+    color: '#2ecc71',
+    textAlign: 'center',
+    marginTop: 8,
   },
 });
 
