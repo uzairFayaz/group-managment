@@ -131,13 +131,15 @@ export const getGroupPosts = async (groupId: string) => {
 
 // Fetch Group QR Code
 export const getGroupQr = async (groupId: string) => {
+  await getCsrfCookie();
   await setupAxios();
   console.log("Fetching QR code for group ID:", groupId); // Debug log
   const response = await api.get(`/api/groups/${groupId}/qr`, {
     headers: { Accept: "image/svg+xml" },
   });
   console.log("QR Code Response:", response.data); // Debug log
-  return response.data;
+
+  return response.data.replace(/<\?xml[^>]*>/, "");
 };
 
 export const requestForgetPassword = async (email: string) => {
@@ -206,15 +208,22 @@ export const createStory = async (
 };
 
 export const createPost = async(
-groupId: string, content: { content: string; group_id: string }
+groupId:string,
+content:string
 
 ) =>{
   await getCsrfCookie();
   await setupAxios();
+  const token = await AsyncStorage.getItem('token');
   const response = await api.post("/api/groups/posts", {
                 group_id: groupId,
-                content,
-            });
+                content:content,
+            },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            }
+          });
             console.log(response.data);
             return response.data;
 
