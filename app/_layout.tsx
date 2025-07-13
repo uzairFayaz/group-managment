@@ -10,6 +10,7 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="index" options={{headerShown:false}}/>
         <Stack.Screen name='otpVerfication'  options={{title:'Otp verify', headerShown: false}}/>
+        <Stack.Screen name='createPost' options={{title:'Post' , headerShown: false}}/>
         <Stack.Screen name='verifyForgetPassword'  options={{title:'Otp verify', headerShown: false}}/>
         <Stack.Screen name='forgetPassword' options={{title:'Forget Password', headerShown: false}}/>
         <Stack.Screen name='resetPassword' options={{title:'Reset password', headerShown:false}}/>

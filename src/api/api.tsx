@@ -205,5 +205,19 @@ export const createStory = async (
   return response.data;
 };
 
+export const createPost = async(
+groupId: string, content: { content: string; group_id: string }
+
+) =>{
+  await getCsrfCookie();
+  await setupAxios();
+  const response = await api.post("/api/groups/posts", {
+                group_id: groupId,
+                content,
+            });
+            console.log(response.data);
+            return response.data;
+
+}
 
 export default api;

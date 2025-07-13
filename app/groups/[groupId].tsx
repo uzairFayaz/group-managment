@@ -168,6 +168,10 @@ const GroupDetailScreen = () => {
     member.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     member.user_email?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  const navigateToCreateGroup = () =>{
+    return router.push('/createPost');
+  }
+
 
   const renderStories = () => {
     console.log('Rendering Stories:', stories.length);
@@ -378,6 +382,9 @@ const GroupDetailScreen = () => {
           {activeTab === 'Members' && renderMembers()}
         </View>
       </ScrollView>
+     { activeTab === "Posts" && <TouchableOpacity style={[styles.fab, { pointerEvents: 'auto' }]} onPress={navigateToCreateGroup}>
+                <Ionicons name="add" size={30} color="white" />
+              </TouchableOpacity>}
     </SafeAreaView>
   );
 };
@@ -472,6 +479,22 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '500',
     fontSize: 16,
+  },
+  fab: {
+    position: 'absolute',
+    right: 30,
+    bottom: 30,
+    backgroundColor: '#4361ee',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
   },
   qrButton: {
     backgroundColor: '#4a90e2',
