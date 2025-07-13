@@ -1,59 +1,61 @@
-import { Ionicons } from '@expo/vector-icons';
+ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router, useLocalSearchParams } from 'expo-router';
+import axios from 'axios';
+import { router } from 'expo-router';
 import React, { useState } from 'react';
-import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-} from 'react-native';
-import { createPost } from '../src/api/api';
+import { Alert, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { getCsrfCookie, setupAxios } from '../src/api/api'; // Adjust import path
 
-const CreatePostScreen = () => {
-  const { groupId } = useLocalSearchParams();
-  const [content, setContent] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  interface CreatePostProps {
+    groupId: string;
+    onPostCreated: () => void;
+  }
 
-  const handleCreatePost = async () => {
-    if (!content.trim()) {
-      setMessage('Post content cannot be empty.');
-      setTimeout(() => setMessage(null), 3000);
-      return;
-    }
+  const CreatePost: React.FC<CreatePostProps> = ({ groupId, onPostCreated }) => {
+    const [content, setContent] = useState('');
+    const [message, setMessage] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setErrors] = useState<string[]>([]);
 
-    try {
-      setLoading(true);
-      const token = await AsyncStorage.getItem('token');
-      if (!token) {
-        Alert.alert('Error', 'Please log in.', [
-          { text: 'OK', onPress: () => router.replace('/login') },
-        ]);
-        return;
+    const handleSubmit = async () => {
+      try {
+        setLoading(true);
+        const token = await AsyncStorage.getItem('token');
+        if (!token) {
+          Alert.alert('Error', 'Please log in to create a post.');
+          return;
+        }
+
+        // Set up Axios with token and CSRF
+        await getCsrfCookie();
+        await setupAxios(); // Assumes this sets the Authorization header
+
+        console.log('Create Post Payload:', { group_id: groupId, content }); // Debug log
+        const response = await axios.post(
+          `http://127.0.0.1:8000/api/groups/posts`, // Explicit base URL
+          { group_id: groupId, content },
+          { headers: { Authorization: `Bearer ${token}` } } // Redundant if setupAxios handles it
+        );
+
+        console.log('Create Post Response:', response.data); // Debug log
+        setMessage(response.data.message || 'Post created successfully.');
+        setContent('');
+        setErrors([]);
+        onPostCreated();
+      } catch (error) {
+        console.error('Create Post Error:', error.response?.data || error.message);
+        const errorMessage = error.response?.data?.message || 'Failed to create post.';
+        setMessage(errorMessage);
+        setErrors(error.response?.data?.errors || []);
+        if ([401, 403].includes(error.response?.status)) {
+          await AsyncStorage.removeItem('token');
+          Alert.alert('Error', 'Session expired. Please log in again.');
+        } else if (error.message.includes('Network Error')) {
+          setMessage('Network error. Check server connection or CORS settings.');
+        }
       }
+    };
 
-      await createPost(groupId as string, { content, group_id: groupId as string } );
-      setMessage('Post created successfully!');
-      setContent('');
-      setTimeout(() => {
-        setMessage(null);
-        router.back();
-      }, 2000);
-    } catch (err: any) {
-      console.error('Create Post Error:', err.response?.data || err.message);
-      setMessage(err.response?.data?.message || 'Failed to create post.');
-      setTimeout(() => setMessage(null), 3000);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -84,7 +86,7 @@ const CreatePostScreen = () => {
             {message && <Text style={styles.message}>{message}</Text>}
             <TouchableOpacity
               style={[styles.submitButton, loading && styles.disabledButton]}
-              onPress={handleCreatePost}
+              onPress={handleSubmit}
               disabled={loading}
             >
               <Text style={styles.submitButtonText}>{loading ? 'Posting...' : 'Post'}</Text>
@@ -173,4 +175,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CreatePostScreen;
+export default CreatePost;

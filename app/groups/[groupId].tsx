@@ -155,7 +155,7 @@ const GroupDetailScreen = () => {
   };
 
   const navigateToQr = () => {
-    router.push('/qr');
+    router.push({pathname:'/qr',params:{groupId: groupId}});
   };
 
   useEffect(() => {
